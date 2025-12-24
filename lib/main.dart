@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:sudoku_core/sudoku_core.dart';
+import 'package:sudoku_flutter/constants.dart';
 import 'package:sudoku_flutter/pages/sudoku.dart';
+import 'package:sudoku_flutter/providers/sudoku_provider.dart';
 
 void main() {
-  runApp(const MyApp());
+  runApp(ProviderScope(child: const MyApp()));
 }
 
 class MyApp extends StatelessWidget {
@@ -14,6 +17,12 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      // routes: {
+      //   '/': (context) => const MyHomePage(title: 'Flutter Demo Home Page'),
+      //   '/sudoku': (context) => const SudokuPage(),
+      //   '/failed': (context) => const Text("Failed"),
+      //   '/success': (context) => const Text("Success"),
+      // },
       title: 'Flutter Demo',
       theme: ThemeData(
         // This is the theme of your application.
@@ -31,14 +40,14 @@ class MyApp extends StatelessWidget {
         //
         // This works for code too, not just values: Most code changes can be
         // tested with just a hot reload.
-        colorScheme: .fromSeed(seedColor: Colors.deepPurple),
+        colorScheme: .fromSeed(seedColor: Colors.deepOrange),
       ),
-      home: const MyHomePage(title: 'Flutter Demo Home Page'),
+      home: const MyHomePage(title: 'Flutter Sudoku'),
     );
   }
 }
 
-class MyHomePage extends StatefulWidget {
+class MyHomePage extends ConsumerStatefulWidget {
   const MyHomePage({super.key, required this.title});
 
   // This widget is the home page of your application. It is stateful, meaning
@@ -53,14 +62,22 @@ class MyHomePage extends StatefulWidget {
   final String title;
 
   @override
-  State<MyHomePage> createState() => _MyHomePageState();
+  ConsumerState<MyHomePage> createState() => _MyHomePageState();
 }
 
-class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
-  bool _showLevelBottomSheet = false;
+class _MyHomePageState extends ConsumerState<MyHomePage> {
+  void selectLevelAndNavigate(Level level, {BuildContext? context}) {
+    ref.read(sudokuNotifierProvider.notifier).generateSudoku(level: level);
+    if (context != null) {
+      Navigator.pop(context);
+    }
+    Navigator.push(
+      this.context,
+      MaterialPageRoute(builder: (_) => const SudokuPage()),
+    );
+  }
 
-  openBottomSheet() {
+  void openBottomSheet() {
     showModalBottomSheet(
       context: context,
       showDragHandle: true,
@@ -78,62 +95,17 @@ class _MyHomePageState extends State<MyHomePage> {
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 16),
-              FilledButton(
-                onPressed: () {
-                  Navigator.pop(context);
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => const SudokuPage(level: Level.easy),
-                    ),
-                  );
-                },
-                child: const Text('Easy'),
-              ),
-              FilledButton(
-                onPressed: () {
-                  Navigator.pop(context);
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => const SudokuPage(level: Level.medium),
-                    ),
-                  );
-                },
-                child: const Text('Medium'),
-              ),
-              FilledButton(
-                onPressed: () {
-                  Navigator.pop(context);
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => const SudokuPage(level: Level.hard),
-                    ),
-                  );
-                },
-                child: const Text('Hard'),
-              ),
+              for (final level in Level.values)
+                FilledButton(
+                  onPressed: () =>
+                      selectLevelAndNavigate(level, context: context),
+                  child: Text(level.name.capitalize()),
+                ),
             ],
           ),
         );
       },
     );
-  }
-
-  void _incrementCounter() {
-    setState(() {
-      // This call to setState tells the Flutter framework that something has
-      // changed in this State, which causes it to rerun the build method below
-      // so that the display can reflect the updated values. If we changed
-      // _counter without calling setState(), then the build method would not be
-      // called again, and so nothing would appear to happen.
-      _counter++;
-    });
-    var sudoku = generateGrid();
-    print(sudoku.grid.toString());
-    print(sudoku.level);
-    print(sudoku);
   }
 
   @override
@@ -172,13 +144,7 @@ class _MyHomePageState extends State<MyHomePage> {
           // action in the IDE, or press "p" in the console), to see the
           // wireframe for each widget.
           mainAxisAlignment: .center,
-          children: [
-            const Text('You have pushed the button this many times:'),
-            Text(
-              '$_counter',
-              style: Theme.of(context).textTheme.headlineMedium,
-            ),
-          ],
+          children: [const Text('Create New Game by clicking on the + button')],
         ),
       ),
       floatingActionButton: FloatingActionButton(
